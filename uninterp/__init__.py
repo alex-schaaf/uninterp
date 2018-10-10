@@ -45,7 +45,7 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     Returns:
         List of Delaunay objects.
     """
-    tri = []
+    triangulators = []
 
     # dataframe filters
     f1 = df.formation == formation
@@ -61,11 +61,11 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
         if np.count_nonzero(f) <= 1:
             continue
         p2 = np.array([df[f].X, df[f].Y, df[f].Z]).T
-        p = np.append(p1, p2, axis=0)
+        points = np.append(p1, p2, axis=0)
 
-        tri.append(Delaunay(p))
+        triangulators.append(Delaunay(points))
 
-    return tri
+    return triangulators
 
 
 def normals_from_delaunay(tris: list):
@@ -77,27 +77,27 @@ def normals_from_delaunay(tris: list):
     Returns:
         (tuple) centroids (np.ndrarray), normals (np.ndarray), simplices (np.ndarray)
     """
-    Cs, Ns, Sm = [], [], []
+    centroids, normals, simplices = [], [], []
     for tri in tris:
         for sim in tri.simplices:
             C, N = plane_fit(tri.points[sim].T)
-            Cs.append(C)
-            Ns.append(N)
-            Sm.append(sim)
+            centroids.append(C)
+            normals.append(N)
+            simplices.append(sim)
 
-    Cs = np.array(Cs)
-    Ns = np.array(Ns)
-    Sm = np.array(Sm)
+    centroids = np.array(centroids)
+    normals = np.array(normals)
+    simplices = np.array(simplices)
 
-    return Cs, Ns, Sm
+    return centroids, normals, simplices
 
 
-def orient_for_interp(Cs: np.ndarray, Ns:np.ndarray, formation:str, interp:int, filter_:bool=True):
+def orient_for_interp(centroids: np.ndarray, normals:np.ndarray, formation:str, interp:int, filter_:bool=True):
     """Converts given centroids and normals into pandas.DataFrame compatible with GemPy orientation data structure.
 
     Args:
-        Cs (np.ndarray): Centroids of planes (N,3)
-        Ns (np.ndarray): Normals of planes (N,3)
+        centroids (np.ndarray): Centroids of planes (N,3)
+        normals (np.ndarray): Normals of planes (N,3)
         formation (str): Formation name
         interp (int): Interpretation id
         filter_ (bool): If orientation data should be filtered or not (default: True).
@@ -107,12 +107,12 @@ def orient_for_interp(Cs: np.ndarray, Ns:np.ndarray, formation:str, interp:int, 
         (pd.DataFrame) Orientations dataframe compatible with GemPy's data structure.
     """
     ndf = pd.DataFrame(columns="X Y Z G_x G_y G_z".split(" "))
-    ndf.X, ndf.Y, ndf.Z = Cs[:, 0], Cs[:, 1], Cs[:, 2]
-    ndf.G_x, ndf.G_y, ndf.G_z = Ns[:, 0], Ns[:, 1], Ns[:, 2]
+    ndf.X, ndf.Y, ndf.Z = centroids[:, 0], centroids[:, 1], centroids[:, 2]
+    ndf.G_x, ndf.G_y, ndf.G_z = normals[:, 0], normals[:, 1], normals[:, 2]
     ndf["formation"] = formation
     ndf["interp"] = interp
 
-    plunge, bearing = mplstereonet.vector2plunge_bearing(Ns[:, 0], Ns[:, 1], Ns[:, 2])
+    plunge, bearing = mplstereonet.vector2plunge_bearing(normals[:, 0], normals[:, 1], normals[:, 2])
     ndf["dip"], ndf["azimuth"] = plunge, bearing
     ndf["polarity"] = 1
 
