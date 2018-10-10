@@ -45,7 +45,7 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     Returns:
         List of Delaunay objects.
     """
-    tri = []
+    triangulators = []
 
     # dataframe filters
     f1 = df.formation == formation
@@ -63,9 +63,9 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
         p2 = np.array([df[f].X, df[f].Y, df[f].Z]).T
         points = np.append(p1, p2, axis=0)
 
-        tri.append(Delaunay(points))
+        triangulators.append(Delaunay(points))
 
-    return tri
+    return triangulators
 
 
 def normals_from_delaunay(tris: list):
