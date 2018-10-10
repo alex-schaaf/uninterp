@@ -34,7 +34,17 @@ def histogram_2d(df, min_, max_, direction="Z", bins=40, range_=None):
         return np.histogram2d(df[f].Y, df[f].Z, bins=bins, range=range_)
 
 
-def concave_trisurf(df, formation, interp):
+def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
+    """Construct 'concave' fault surface from given fault sticks by use of iterative Delaunay triangulation.
+
+    Args:
+        df: pandas DataFrame containing fault stick information with columns [X Y Z formation interp "stick_id"]
+        formation: Formation to construct surface for.
+        interp: Interpretation to construct surface for.
+
+    Returns:
+        List of Delaunay objects.
+    """
     tri = []
 
     # dataframe filters
@@ -56,7 +66,15 @@ def concave_trisurf(df, formation, interp):
     return tri
 
 
-def normals_from_delaunay(tris):
+def normals_from_delaunay(tris: list[Delaunay]):
+    """Compute normals for given list of Delaunay objects containing triangles.
+
+    Args:
+        tris (list): List of Delaunay objects.
+
+    Returns:
+        (tuple) centroids (np.ndrarray), normals (np.ndarray), simplices (np.ndarray)
+    """
     Cs, Ns, Sm = [], [], []
     for tri in tris:
         for sim in tri.simplices:
@@ -72,7 +90,20 @@ def normals_from_delaunay(tris):
     return Cs, Ns, Sm
 
 
-def orient_for_interp(Cs, Ns, formation, interp, filter_=True):
+def orient_for_interp(Cs: np.ndarray, Ns:np.ndarray, formation:str, interp:int, filter_:bool=True):
+    """Converts given centroids and normals into pandas.DataFrame compatible with GemPy orientation data structure.
+
+    Args:
+        Cs (np.ndarray): Centroids of planes (N,3)
+        Ns (np.ndarray): Normals of planes (N,3)
+        formation (str): Formation name
+        interp (int): Interpretation id
+        filter_ (bool): If orientation data should be filtered or not (default: True).
+            Currently only filters completely horizontal planes.
+
+    Returns:
+        (pd.DataFrame) Orientations dataframe compatible with GemPy's data structure.
+    """
     ndf = pd.DataFrame(columns="X Y Z G_x G_y G_z".split(" "))
     ndf.X, ndf.Y, ndf.Z = Cs[:, 0], Cs[:, 1], Cs[:, 2]
     ndf.G_x, ndf.G_y, ndf.G_z = Ns[:, 0], Ns[:, 1], Ns[:, 2]
