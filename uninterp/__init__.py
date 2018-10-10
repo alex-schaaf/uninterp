@@ -7,7 +7,7 @@ import mplstereonet
 import pandas as pd
 
 
-def histogram_2d(df, min_, max_, direction="Z", bins=40, range_=None):
+def histogram_2d(df: pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
     """
 
     Arguments:
@@ -48,8 +48,8 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     tri = []
 
     # dataframe filters
-    f1 = df["formation"] == formation
-    f2 = df["interp"] == interp
+    f1 = df.formation == formation
+    f2 = df.interp == interp
 
     # stick id's
     sid = df[f1 & f2]["stick id"].unique()
@@ -58,6 +58,8 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
         f = f1 & f2 & (df["stick id"] == s1)
         p1 = np.array([df[f].X, df[f].Y, df[f].Z]).T
         f = f1 & f2 & (df["stick id"] == s2)
+        if np.count_nonzero(f) <= 1:
+            continue
         p2 = np.array([df[f].X, df[f].Y, df[f].Z]).T
         p = np.append(p1, p2, axis=0)
 
@@ -66,7 +68,7 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     return tri
 
 
-def normals_from_delaunay(tris: list[Delaunay]):
+def normals_from_delaunay(tris: list):
     """Compute normals for given list of Delaunay objects containing triangles.
 
     Args:
