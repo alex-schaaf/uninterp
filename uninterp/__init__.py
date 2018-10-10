@@ -68,17 +68,17 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     return triangulators
 
 
-def normals_from_delaunay(tris: list):
+def normals_from_delaunay(delaunays: list):
     """Compute normals for given list of Delaunay objects containing triangles.
 
     Args:
-        tris (list): List of Delaunay objects.
+        delaunays (list): List of Delaunay objects.
 
     Returns:
         (tuple) centroids (np.ndrarray), normals (np.ndarray), simplices (np.ndarray)
     """
     centroids, normals, simplices = [], [], []
-    for tri in tris:
+    for tri in delaunays:
         for sim in tri.simplices:
             C, N = plane_fit(tri.points[sim].T)
             centroids.append(C)
