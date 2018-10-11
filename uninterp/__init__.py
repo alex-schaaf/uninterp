@@ -2,12 +2,11 @@ import numpy as np
 from scipy.spatial import Delaunay
 import sys
 sys.path.append("../../gempy")
-from gempy.utils.petrel_integration import plane_fit
 import mplstereonet
 import pandas as pd
 
 
-def histogram_2d(df: pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
+def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
     """
 
     Arguments:
@@ -34,7 +33,7 @@ def histogram_2d(df: pd.DataFrame, min_:float, max_:float, direction:str="Z", bi
         return np.histogram2d(df[f].Y, df[f].Z, bins=bins, range=range_)
 
 
-def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
+def concave_trisurf(df:pd.DataFrame, formation: str, interp: int):
     """Construct 'concave' fault surface from given fault sticks by use of iterative Delaunay triangulation.
 
     Args:
@@ -68,7 +67,7 @@ def concave_trisurf(df: pd.DataFrame, formation: str, interp: int):
     return triangulators
 
 
-def normals_from_delaunay(delaunays: list):
+def normals_from_delaunay(delaunays:list):
     """Compute normals for given list of Delaunay objects containing triangles.
 
     Args:
@@ -92,7 +91,7 @@ def normals_from_delaunay(delaunays: list):
     return centroids, normals, simplices
 
 
-def orient_for_interp(centroids: np.ndarray, normals:np.ndarray, formation:str, interp:int, filter_:bool=True):
+def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, interp:int, filter_:bool=True):
     """Converts given centroids and normals into pandas.DataFrame compatible with GemPy orientation data structure.
 
     Args:
@@ -121,3 +120,88 @@ def orient_for_interp(centroids: np.ndarray, normals:np.ndarray, formation:str, 
         return ndf[vertbool]
     else:
         return ndf
+
+
+def bin_df(df:pd.DataFrame, nbins:iter):
+    """Inplace binning of given dataframe along x,y,z axis using given number of divisions in each direction.
+
+    Args:
+        df (pd.DataFrame): DataFrame to be binned, must contain columns X,Y,Z
+        nbins (iter): List or tuple of int containing the number of bins in each direction (x,y,z)
+
+    Returns:
+        None
+    """
+    df["xbin"] = pd.cut(df["X"], np.linspace(df.X.min(), df.X.max(), nbins[0]))
+    df["ybin"] = pd.cut(df["Y"], np.linspace(df.Y.min(), df.Y.max(), nbins[1]))
+    df["zbin"] = pd.cut(df["Z"], np.linspace(df.Z.min(), df.Z.max(), nbins[2]))
+    return None
+
+
+def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4)):
+    """Fits planes to binned fault interpretations (per interpretation to estimate orientation, returns GemPy-compatible
+    pd.DataFrame with orientation data.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the fault stick interpretation points.
+        fault (str): Formation string of the fault to be extracted.
+        nbins (iter): List or tuple containing the number of bins in each spatial direction (x,y,z), default (5,5,4)
+
+    Returns:
+        pd.DataFrame with GemPy-compatible orientations structure
+    """
+    df = df[df.formation == fault]
+    bin_df(df, nbins)
+    groups = df.groupby(["xbin", "ybin", "zbin", "interp"]).groups
+
+    df_columns = "X Y Z G_x G_y G_z dip azimuth polarity formation interp xbin ybin zbin".split()
+    orientations = pd.DataFrame(columns=df_columns)
+
+    for key, i in groups.items():
+        if len(i) < 3:
+            continue  # can't fit plane
+        points = df.iloc[i][["X", "Y", "Z"]].values
+        centroid, normal = plane_fit(points.T)
+        dip, azimuth = mplstereonet.vector2plunge_bearing(normal[0], normal[1], normal[2])
+
+        orientation = [centroid[0], centroid[1], centroid[2],
+                       normal[0], normal[1], normal[2],
+                       float(dip), float(azimuth), 1,
+                       fault,
+                       key[3],
+                       key[0],
+                       key[1],
+                       key[2]]
+
+        orientations.loc[len(orientations)] = orientation
+
+    return orientations
+
+
+def plane_fit(points):
+    """
+    Fit plane to points in PointSet
+    Fit an d-dimensional plane to the points in a point set.
+    adjusted from: http://stackoverflow.com/questions/12299540/plane-fitting-to-4-or-more-xyz-points
+
+    Args:
+        point_list (array_like): array of points XYZ
+
+    Returns:
+        Return a point, p, on the plane (the point-cloud centroid),
+        and the normal, n.
+    """
+
+    from numpy.linalg import svd
+    points = np.reshape(points, (np.shape(points)[0], -1))  # Collapse trialing dimensions
+    assert points.shape[0] <= points.shape[1], "There are only {} points in {} dimensions.".format(points.shape[1],
+                                                                                                   points.shape[0])
+    centroid = points.mean(axis=1)
+    x = points - centroid[:, np.newaxis]
+    M = np.dot(x, x.T)  # Could also use np.cov(x) here.
+    normal = svd(M)[0][:, -1]
+    # return ctr, svd(M)[0][:, -1]
+    if normal[2] < 0:
+        normal = -normal
+
+    return centroid, normal
