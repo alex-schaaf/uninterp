@@ -122,19 +122,22 @@ def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, i
         return ndf
 
 
-def bin_df(df:pd.DataFrame, nbins:iter):
+def bin_df(df:pd.DataFrame, nbins:iter, extent:iter=None):
     """Inplace binning of given dataframe along x,y,z axis using given number of divisions in each direction.
 
     Args:
         df (pd.DataFrame): DataFrame to be binned, must contain columns X,Y,Z
         nbins (iter): List or tuple of int containing the number of bins in each direction (x,y,z)
+        extent (iter): List or tuple of float containing the extent (x,X,y,Y,z,Z)
 
     Returns:
         None
     """
-    df["xbin"] = pd.cut(df["X"], np.linspace(df.X.min(), df.X.max(), nbins[0]))
-    df["ybin"] = pd.cut(df["Y"], np.linspace(df.Y.min(), df.Y.max(), nbins[1]))
-    df["zbin"] = pd.cut(df["Z"], np.linspace(df.Z.min(), df.Z.max(), nbins[2]))
+    if not extent:
+        extent = [df.X.min(), df.X.max(), df.Y.min(), df.Y.max(), df.Z.min(), df.Z.max()]
+    df["xbin"] = pd.cut(df["X"], np.linspace(extent[0], extent[1], nbins[0]))
+    df["ybin"] = pd.cut(df["Y"], np.linspace(extent[2], extent[3], nbins[1]))
+    df["zbin"] = pd.cut(df["Z"], np.linspace(extent[4], extent[5], nbins[2]))
     return None
 
 
