@@ -162,7 +162,7 @@ def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4)):
     for key, i in groups.items():
         if len(i) < 3:
             continue  # can't fit plane
-        points = df.iloc[i][["X", "Y", "Z"]].values
+        points = df.loc[i][["X", "Y", "Z"]].values
         centroid, normal = plane_fit(points.T)
         dip, azimuth = mplstereonet.vector2plunge_bearing(normal[0], normal[1], normal[2])
 
@@ -207,3 +207,35 @@ def plane_fit(points):
         normal = -normal
 
     return centroid, normal
+
+
+def xunc(df:pd.DataFrame, fault:str, extent:tuple, nbins:tuple):
+    """
+
+    Args:
+        df:
+        fault:
+        extent:
+        nbins:
+
+    Returns:
+
+    """
+    ybins = np.linspace(extent[2], extent[3], nbins[1])
+    zbins = np.linspace(extent[4], extent[5], nbins[2]).astype(int)
+
+    s1, s2 = [], []
+    for z1, z2 in zip(zbins[:-1], zbins[1:]):
+        means, stds = [], []
+        for l, u in zip(ybins[:-1], ybins[1:]):
+            f = (df.formation == fault) & (df.Y >= l) & (df.Y < u) & (df.Z >= z1) & (df.Z < z2)
+            means.append(np.mean(df[f].X))
+            stds.append(np.std(df[f].X))
+
+        s1.append(means)
+        s2.append(stds)
+
+    s1 = np.array(s1)
+    s2 = np.array(s2)
+
+    return s1, s2, (ybins, zbins)
