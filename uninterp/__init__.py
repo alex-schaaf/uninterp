@@ -140,7 +140,7 @@ def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, i
         return ndf
 
 
-def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4)):
+def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4), extent=None):
     """Fits planes to binned fault interpretations (per interpretation to estimate orientation, returns GemPy-compatible
     pd.DataFrame with orientation data.
 
@@ -153,7 +153,7 @@ def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4)):
         pd.DataFrame with GemPy-compatible orientations structure
     """
     df = df[df.formation == fault]
-    bin_df(df, nbins)
+    bin_df(df, nbins, extent=extent)
     groups = df.groupby(["xbin", "ybin", "zbin", "interp"]).groups
 
     df_columns = "X Y Z G_x G_y G_z dip azimuth polarity formation interp xbin ybin zbin".split()
