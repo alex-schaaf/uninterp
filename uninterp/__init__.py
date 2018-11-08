@@ -209,33 +209,31 @@ def plane_fit(points):
     return centroid, normal
 
 
-def xunc(df:pd.DataFrame, fault:str, extent:tuple, nbins:tuple):
-    """
+def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
+    """Extracts mean, standard deviation and count of from fault or horizon interpretations from given binned dataframe
+    along specified direction for given formation.
 
     Args:
-        df:
-        fault:
-        extent:
-        nbins:
+        df: pd.DataFrame containing interpretation data, prebinned!
+        fmt: Name of formation to be analysed
+        axis: Along which axis (x,y,z) to compute the mean, std and count
 
     Returns:
-
+        pd.DataFrame
     """
-    ybins = np.linspace(extent[2], extent[3], nbins[1])
-    zbins = np.linspace(extent[4], extent[5], nbins[2]).astype(int)
+    if axis == "x":
+        grp = df[df.formation == fmt].groupby(["ybin", "zbin"])
+        mean, std, count = grp.X.mean(), grp.X.std(), grp.X.count()
+    elif axis == "z":
+        grp = df[df.formation == fmt].groupby(["xbin", "ybin"])
+        mean, std, count = grp.Z.mean(), grp.Z.std(), grp.Z.count()
+    elif axis == "y":
+        grp = df[df.formation == fmt].groupby(["ybin", "zbin"])
+        mean, std, count = grp.Y.mean(), grp.Y.std(), grp.Y.count()
+    else:
+        raise ValueError("Direction must be either x, y or z.")
 
-    s1, s2 = [], []
-    for z1, z2 in zip(zbins[:-1], zbins[1:]):
-        means, stds = [], []
-        for l, u in zip(ybins[:-1], ybins[1:]):
-            f = (df.formation == fault) & (df.Y >= l) & (df.Y < u) & (df.Z >= z1) & (df.Z < z2)
-            means.append(np.mean(df[f].X))
-            stds.append(np.std(df[f].X))
+    rdf = pd.DataFrame(mean)
+    rdf["std"], rdf["count"] = std, count
 
-        s1.append(means)
-        s2.append(stds)
-
-    s1 = np.array(s1)
-    s2 = np.array(s2)
-
-    return s1, s2, (ybins, zbins)
+    return rdf
