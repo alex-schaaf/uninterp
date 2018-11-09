@@ -228,7 +228,7 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
         grp = df[df.formation == fmt].groupby(["xbin", "ybin"])
         mean, std, count = grp.Z.mean(), grp.Z.std(), grp.Z.count()
     elif axis == "y":
-        grp = df[df.formation == fmt].groupby(["ybin", "zbin"])
+        grp = df[df.formation == fmt].groupby(["xbin", "zbin"])
         mean, std, count = grp.Y.mean(), grp.Y.std(), grp.Y.count()
     else:
         raise ValueError("Direction must be either x, y or z.")
