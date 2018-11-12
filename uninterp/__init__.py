@@ -140,7 +140,7 @@ def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, i
         return ndf
 
 
-def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4), extent=None):
+def get_interf_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5, 5, 4), extent=None):
     """Fits planes to binned fault interpretations (per interpretation to estimate orientation, returns GemPy-compatible
     pd.DataFrame with orientation data.
 
@@ -148,6 +148,7 @@ def get_fault_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5,5,4), exten
         df (pd.DataFrame): DataFrame containing the fault stick interpretation points.
         fault (str): Formation string of the fault to be extracted.
         nbins (iter): List or tuple containing the number of bins in each spatial direction (x,y,z), default (5,5,4)
+        extent (tuple): (x,X,y,Y,z,Z), if not given will determin extent from data
 
     Returns:
         pd.DataFrame with GemPy-compatible orientations structure
