@@ -80,9 +80,10 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
         (pandas.DataFrame) Fault stick information stored in dataframe with ["X", "Y", "Z"] columns.
     """
 
-    with open(fp, "r") as file:
-        lines = list(map(str.rstrip, file))
+    with open(fp, "r") as file:  # open file
+        lines = list(map(str.rstrip, file))  # read lines and strip them of \n
 
+    # get extent,
     extent = np.array(lines[2].split(" ")[1:]).astype(float)
     fsnrow = np.array(lines[3].split(" ")[1:]).astype(int)
     fsxinc = np.array(lines[4].split(" ")[1:]).astype(float)
@@ -101,7 +102,7 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
     rows = np.array(rows)
 
     Xs = np.linspace(extent[0], extent[1], fsnrow[1])
-    Ys = np.linspace(extent[2], extent[3], fsnrow[0])
+    Ys = np.linspace(extent[3], extent[2], fsnrow[0])
 
     XY = []
     for x in Xs:
