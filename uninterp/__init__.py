@@ -288,8 +288,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     # DISTANCES
     # find nearest point (euclidean)
     n_dist = 3
-    h1pi = np.argsort(cdist(np.ndarray([[fc_x, fc_y, fc_z]]), hor1[["X", "Y", "Z"]].values))[0, :n_dist]
-    h2pi = np.argsort(cdist(np.ndarray([[fc_x, fc_y, fc_z]]), hor2[["X", "Y", "Z"]].values))[0, :n_dist]
+    h1pi = np.argsort(cdist([(fc_x, fc_y, fc_z)], hor1[["X", "Y", "Z"]].values))[0, :n_dist]
+    h2pi = np.argsort(cdist([(fc_x, fc_y, fc_z)], hor2[["X", "Y", "Z"]].values))[0, :n_dist]
 
     h1d = hor1[hor1["Y"].isin(hor1.iloc[h1pi].Y.values)]
     h2d = hor2[hor2["Y"].isin(hor2.iloc[h2pi].Y.values)]
