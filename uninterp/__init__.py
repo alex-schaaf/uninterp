@@ -244,15 +244,15 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
     return rdf
 
 def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
-    """source: https://stackoverflow.com/a/51127674"""
+    """modified from source: https://stackoverflow.com/a/51127674"""
     px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
                 (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
     py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
                 (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
-    return px[0], py[0]
+    return np.array([px[0], py[0]]).flatten()
 
 
-def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
+def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
     """
 
     Args:
@@ -263,6 +263,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     Returns:
 
     """
+    # TODO: fix negative Z workaround
     # ------------------------------------------
     # FAULT
     # LinReg
@@ -270,7 +271,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     f_linreg.fit(fd.X[:, np.newaxis], -fd.Z[:, np.newaxis])
 
     # Fault stick centroid
-    fc_x, fc_y, fc_z = fd[["X", "Y", "Z"]].mean()
+    fc = fd[["X", "Y", "Z"]].mean()
 
     # PLOT FAULT
     if plot:
@@ -282,14 +283,14 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
         p.circle(fd.X, -fd.Z, color="black", legend="Fault")
         p.line(fd.X, -fd.Z, color="black")
         p.line(nx, f_linreg_p[:, 0], color="lightgrey")
-        p.circle(fc_x, -fc_z, color="red", legend="Fault stick centroid")
+        p.circle(fc[0], -fc[2], color="red", legend="Fault stick centroid")
 
     # ------------------------------------------
     # DISTANCES
     # find nearest point (euclidean)
     n_dist = 3
-    h1pi = np.argsort(cdist([(fc_x, fc_y, fc_z)], hor1[["X", "Y", "Z"]].values))[0, :n_dist]
-    h2pi = np.argsort(cdist([(fc_x, fc_y, fc_z)], hor2[["X", "Y", "Z"]].values))[0, :n_dist]
+    h1pi = np.argsort(cdist([tuple(fc)], hor1[["X", "Y", "Z"]].values))[0, :n_dist]
+    h2pi = np.argsort(cdist([tuple(fc)], hor2[["X", "Y", "Z"]].values))[0, :n_dist]
 
     h1d = hor1[hor1["Y"].isin(hor1.iloc[h1pi].Y.values)]
     h2d = hor2[hor2["Y"].isin(hor2.iloc[h2pi].Y.values)]
@@ -302,7 +303,6 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     gradf = slice(None)
     h1_linreg = LinearRegression()
     h1_linreg.fit(h1d.X[gradf][:, np.newaxis], -h1d.Z[gradf][:, np.newaxis])
-
 
     intercept1 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
                                   fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
@@ -341,5 +341,14 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
         bp.show(p)
     # slip
     # TODO: positive for normal fault slip, negative for reverse fault slip
-    fault_slip = euclidean(intercept1, intercept2)
-    return fault_slip
+    dip_separation = euclidean(intercept1, intercept2)
+    heave = abs(intercept1[0] - intercept2[0])
+    throw = abs(intercept1[1] - intercept2[1])
+
+
+    if return_data:
+        return {"dipsep": dip_separation, "h1_intercept": intercept1, "h2_intercept": intercept2, "fault_centroid": fc,
+                "h1_data": h1d, "h1_linreg": h1_linreg, "h2_data": h2d, "h2_linreg": h2_linreg, "fault_data": fd,
+                "fault_linreg": f_linreg, "heave": heave, "throw": throw}
+    else:
+        return dip_separation
