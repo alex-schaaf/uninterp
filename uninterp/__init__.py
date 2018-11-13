@@ -252,7 +252,7 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     return np.array([px[0], py[0]]).flatten()
 
 
-def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
+def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad_filter:int=None):
     """
 
     Args:
@@ -295,12 +295,19 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
     h1d = hor1[hor1["Y"].isin(hor1.iloc[h1pi].Y.values)]
     h2d = hor2[hor2["Y"].isin(hor2.iloc[h2pi].Y.values)]
 
+    if len(h1d) == 0 or len(h2d) == 0:
+        return None
+
     # ------------------------------------------
     # BLOCK 1
 
     # linear regression
     # gradf = h1_zgrad < -0  # what if all errors bigger?
-    gradf = slice(None)
+
+    if grad_filter is not None:
+        gradf = np.gradient(h1d.Z) < np.percentile(np.gradient(h1d.Z), grad_filter)
+    else:
+        gradf = slice(None)
     h1_linreg = LinearRegression()
     h1_linreg.fit(h1d.X[gradf][:, np.newaxis], -h1d.Z[gradf][:, np.newaxis])
 
@@ -318,10 +325,11 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
 
     # ------------------------------------------
     # BLOCK 2
-
     # linear regression
-    # gradf = h2_zgrad < -5
-    gradf = slice(None)
+    if grad_filter is not None:
+            gradf = np.gradient(h2d.Z) < np.percentile(np.gradient(h2d.Z), grad_filter)
+    else:
+        gradf = slice(None)
     h2_linreg = LinearRegression()
     h2_linreg.fit(h2d.X[gradf][:, np.newaxis], -h2d.Z[gradf][:, np.newaxis])
 
@@ -341,7 +349,10 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
         bp.show(p)
     # slip
     # TODO: positive for normal fault slip, negative for reverse fault slip
-    dip_separation = euclidean(intercept1, intercept2)
+    try:
+        dip_separation = euclidean(intercept1, intercept2)
+    except ValueError:
+        return np.nan
     heave = abs(intercept1[0] - intercept2[0])
     throw = abs(intercept1[1] - intercept2[1])
 
@@ -351,4 +362,4 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False):
                 "h1_data": h1d, "h1_linreg": h1_linreg, "h2_data": h2d, "h2_linreg": h2_linreg, "fault_data": fd,
                 "fault_linreg": f_linreg, "heave": heave, "throw": throw}
     else:
-        return dip_separation
+        return throw
