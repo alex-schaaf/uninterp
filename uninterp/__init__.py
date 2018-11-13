@@ -4,6 +4,10 @@ import sys
 sys.path.append("../../gempy")
 import mplstereonet
 import pandas as pd
+from sklearn.linear_model import LinearRegression
+from scipy.spatial.distance import cdist, euclidean
+import bokeh.plotting as bp
+
 
 def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
     """
@@ -238,3 +242,103 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
     rdf["std"], rdf["count"] = std, count
 
     return rdf
+
+def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
+    """source: https://stackoverflow.com/a/51127674"""
+    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
+                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
+                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+    return px[0], py[0]
+
+
+def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
+    """
+
+    Args:
+        fd (pd.DataFrame): fault data (fault interp and stick pre-filtered)
+        hor1 (pd.DataFrame):
+        hor2 (pd.DataFrame):
+
+    Returns:
+
+    """
+    # ------------------------------------------
+    # FAULT
+    # PLOT FAULT
+
+    # FAULT LinReg
+    f_linreg = LinearRegression()
+    f_linreg.fit(fd.X[:, np.newaxis], -fd.Z[:, np.newaxis])
+    ## predict and plot
+    nx = np.linspace(fd.X.min() - 500, fd.X.max() + 500, 100)
+    f_linreg_p = f_linreg.predict(nx[:, np.newaxis])
+    # Fault stick centroid
+    fc_x, fc_y, fc_z = fd[["X", "Y", "Z"]].mean()  # !!! REFACTOR
+    # plot fault centroid X,Z
+
+    if plot:
+        p = bp.figure()
+        p.circle(fd.X, -fd.Z, color="black", legend="Fault")
+        p.line(fd.X, -fd.Z, color="black")
+        p.line(nx, f_linreg_p[:, 0], color="lightgrey")
+        p.circle(fc_x, -fc_z, color="red", legend="Fault stick centroid")
+
+    # ------------------------------------------
+    # DISTANCES
+    # find nearest point (euclidean)
+    n_dist = 3
+    h1pi = np.argsort(cdist(np.ndarray([[fc_x, fc_y, fc_z]]), hor1[["X", "Y", "Z"]].values))[0, :n_dist]
+    h2pi = np.argsort(cdist(np.ndarray([[fc_x, fc_y, fc_z]]), hor2[["X", "Y", "Z"]].values))[0, :n_dist]
+
+    h1d = hor1[hor1["Y"].isin(hor1.iloc[h1pi].Y.values)]
+    h2d = hor2[hor2["Y"].isin(hor2.iloc[h2pi].Y.values)]
+
+    # ------------------------------------------
+    # BLOCK 1
+
+    # linear regression
+    # gradf = h1_zgrad < -0  # what if all errors bigger?
+    gradf = slice(None)
+    h1_linreg = LinearRegression()
+    h1_linreg.fit(h1d.X[gradf][:, np.newaxis], -h1d.Z[gradf][:, np.newaxis])
+    ## predict and plot
+    nx = np.linspace(h1d.X.min() - 500, h1d.X.max() + 500, 100)
+    h1_linreg_p = h1_linreg.predict(nx[:, np.newaxis])
+
+    intercept1 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
+                                  fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
+                                  h1d.X.min(), h1_linreg.predict(np.array([h1d.X.min()])[:, np.newaxis]),
+                                  h1d.X.max(), h1_linreg.predict(np.array([h1d.X.max()])[:, np.newaxis]))
+
+    if plot:
+        p.circle(h1d.X, -h1d.Z, color="lightblue", legend="Block 1")
+        p.line(nx, h1_linreg_p[:, 0], color="lightblue")
+
+    # ------------------------------------------
+    # BLOCK 2
+
+    # linear regression
+    # gradf = h2_zgrad < -5
+    gradf = slice(None)
+    h2_linreg = LinearRegression()
+    h2_linreg.fit(h2d.X[gradf][:, np.newaxis], -h2d.Z[gradf][:, np.newaxis])
+    ## predict and plot
+    nx = np.linspace(h2d.X.min() - 500, h2d.X.max() + 500, 100)
+    h2_linreg_p = h2_linreg.predict(nx[:, np.newaxis])
+
+    intercept2 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
+                                  fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
+                                  h2d.X.min(), h2_linreg.predict(np.array([h2d.X.min()])[:, np.newaxis]),
+                                  h2d.X.max(), h2_linreg.predict(np.array([h2d.X.max()])[:, np.newaxis]))
+
+    if plot:
+        p.circle(h2d.X, -h2d.Z, color="orange", legend="Block 2")
+        p.line(nx, h2_linreg_p[:, 0], color="orange")
+        p.circle(intercept1[0], intercept1[1], color="pink", legend="Intersect 1", size=10)
+        p.circle(intercept2[0], intercept2[1], color="lime", legend="Intersect 2", size=10)
+
+        bp.show(p)
+    # slip
+    fault_slip = euclidean(intercept1, intercept2)
+    return fault_slip
