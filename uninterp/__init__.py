@@ -265,19 +265,19 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     """
     # ------------------------------------------
     # FAULT
-    # PLOT FAULT
-
-    # FAULT LinReg
+    # LinReg
     f_linreg = LinearRegression()
     f_linreg.fit(fd.X[:, np.newaxis], -fd.Z[:, np.newaxis])
-    ## predict and plot
-    nx = np.linspace(fd.X.min() - 500, fd.X.max() + 500, 100)
-    f_linreg_p = f_linreg.predict(nx[:, np.newaxis])
-    # Fault stick centroid
-    fc_x, fc_y, fc_z = fd[["X", "Y", "Z"]].mean()  # !!! REFACTOR
-    # plot fault centroid X,Z
 
+    # Fault stick centroid
+    fc_x, fc_y, fc_z = fd[["X", "Y", "Z"]].mean()
+
+    # PLOT FAULT
     if plot:
+        # predict for plot
+        nx = np.linspace(fd.X.min() - 500, fd.X.max() + 500, 100)
+        f_linreg_p = f_linreg.predict(nx[:, np.newaxis])
+
         p = bp.figure()
         p.circle(fd.X, -fd.Z, color="black", legend="Fault")
         p.line(fd.X, -fd.Z, color="black")
@@ -302,9 +302,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     gradf = slice(None)
     h1_linreg = LinearRegression()
     h1_linreg.fit(h1d.X[gradf][:, np.newaxis], -h1d.Z[gradf][:, np.newaxis])
-    ## predict and plot
-    nx = np.linspace(h1d.X.min() - 500, h1d.X.max() + 500, 100)
-    h1_linreg_p = h1_linreg.predict(nx[:, np.newaxis])
+
 
     intercept1 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
                                   fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
@@ -312,6 +310,9 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
                                   h1d.X.max(), h1_linreg.predict(np.array([h1d.X.max()])[:, np.newaxis]))
 
     if plot:
+        ## predict and plot
+        nx = np.linspace(h1d.X.min() - 500, h1d.X.max() + 500, 100)
+        h1_linreg_p = h1_linreg.predict(nx[:, np.newaxis])
         p.circle(h1d.X, -h1d.Z, color="lightblue", legend="Block 1")
         p.line(nx, h1_linreg_p[:, 0], color="lightblue")
 
@@ -323,9 +324,6 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
     gradf = slice(None)
     h2_linreg = LinearRegression()
     h2_linreg.fit(h2d.X[gradf][:, np.newaxis], -h2d.Z[gradf][:, np.newaxis])
-    ## predict and plot
-    nx = np.linspace(h2d.X.min() - 500, h2d.X.max() + 500, 100)
-    h2_linreg_p = h2_linreg.predict(nx[:, np.newaxis])
 
     intercept2 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
                                   fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
@@ -333,6 +331,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
                                   h2d.X.max(), h2_linreg.predict(np.array([h2d.X.max()])[:, np.newaxis]))
 
     if plot:
+        nx = np.linspace(h2d.X.min() - 500, h2d.X.max() + 500, 100)
+        h2_linreg_p = h2_linreg.predict(nx[:, np.newaxis])
         p.circle(h2d.X, -h2d.Z, color="orange", legend="Block 2")
         p.line(nx, h2_linreg_p[:, 0], color="orange")
         p.circle(intercept1[0], intercept1[1], color="pink", legend="Intersect 1", size=10)
@@ -340,5 +340,6 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True):
 
         bp.show(p)
     # slip
+    # TODO: positive for normal fault slip, negative for reverse fault slip
     fault_slip = euclidean(intercept1, intercept2)
     return fault_slip
