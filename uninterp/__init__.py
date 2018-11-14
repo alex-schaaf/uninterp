@@ -252,7 +252,7 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     return np.array([px[0], py[0]]).flatten()
 
 
-def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad_filter:int=None):
+def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     """
 
     Args:
@@ -288,7 +288,6 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad
     # ------------------------------------------
     # DISTANCES
     # find nearest point (euclidean)
-    n_dist = 3
     h1pi = np.argsort(cdist([tuple(fc)], hor1[["X", "Y", "Z"]].values))[0, :n_dist]
     h2pi = np.argsort(cdist([tuple(fc)], hor2[["X", "Y", "Z"]].values))[0, :n_dist]
 
@@ -304,7 +303,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad
     # linear regression
     # gradf = h1_zgrad < -0  # what if all errors bigger?
 
-    if grad_filter is not None:
+    if grad_filter is not None and len(h1d) >= 4:
         gradf = np.gradient(h1d.Z) < np.percentile(np.gradient(h1d.Z), grad_filter)
     else:
         gradf = slice(None)
@@ -326,7 +325,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad
     # ------------------------------------------
     # BLOCK 2
     # linear regression
-    if grad_filter is not None:
+    if grad_filter is not None and len(h2d) >= 4:
             gradf = np.gradient(h2d.Z) < np.percentile(np.gradient(h2d.Z), grad_filter)
     else:
         gradf = slice(None)
@@ -352,7 +351,7 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad
     try:
         dip_separation = euclidean(intercept1, intercept2)
     except ValueError:
-        return np.nan
+        return None
     heave = abs(intercept1[0] - intercept2[0])
     throw = abs(intercept1[1] - intercept2[1])
 
