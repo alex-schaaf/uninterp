@@ -356,10 +356,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, return_data=False, grad
     heave = abs(intercept1[0] - intercept2[0])
     throw = abs(intercept1[1] - intercept2[1])
 
-
-    if return_data:
-        return {"dipsep": dip_separation, "h1_intercept": intercept1, "h2_intercept": intercept2, "fault_centroid": fc,
-                "h1_data": h1d, "h1_linreg": h1_linreg, "h2_data": h2d, "h2_linreg": h2_linreg, "fault_data": fd,
-                "fault_linreg": f_linreg, "heave": heave, "throw": throw}
-    else:
-        return throw
+    # get data ready for return
+    data = {"X": fc[0], "Y": fc[1], "Z": fc[2], "throw": throw, "heave": heave, "dipsep": dip_separation,
+            "i1x": intercept1[0], "i1z": intercept1[1], "i2x": intercept2[0], "i2z": intercept2[0],
+            "interp": fd.interp.unique(), "stick": fd.stick.unique(), "formation": fd.formation.unique(), "block": fd.block.unique()}
+    return pd.DataFrame(data, index=[np.nan])
