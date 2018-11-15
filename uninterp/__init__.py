@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from scipy.spatial.distance import cdist, euclidean
 import bokeh.plotting as bp
+import warnings
 
 
 def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
@@ -245,10 +246,18 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
 
 def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     """modified from source: https://stackoverflow.com/a/51127674"""
-    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
-                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
-    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
-                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error")
+        try:
+            px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
+                        (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+            py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
+                        (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+        except Warning as e:
+            print("warning found:", e, "for input data: ", x1, y1, x2, y2, x3, y3, x4, y4)
+            return None
     return np.array([px[0], py[0]]).flatten()
 
 
@@ -314,6 +323,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
                                   fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
                                   h1d.X.min(), h1_linreg.predict(np.array([h1d.X.min()])[:, np.newaxis]),
                                   h1d.X.max(), h1_linreg.predict(np.array([h1d.X.max()])[:, np.newaxis]))
+    if intercept1 is None:
+        return None
 
     if plot:
         ## predict and plot
@@ -336,6 +347,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
                                   fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
                                   h2d.X.min(), h2_linreg.predict(np.array([h2d.X.min()])[:, np.newaxis]),
                                   h2d.X.max(), h2_linreg.predict(np.array([h2d.X.max()])[:, np.newaxis]))
+    if intercept2 is None:
+        return None
 
     if plot:
         nx = np.linspace(h2d.X.min() - 500, h2d.X.max() + 500, 100)
