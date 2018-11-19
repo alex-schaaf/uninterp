@@ -7,6 +7,5 @@ dependencies:
   - scikit-learn
   - bokeh
   - warnings
-  - pip
   - pip:
     - mplstereoplot
