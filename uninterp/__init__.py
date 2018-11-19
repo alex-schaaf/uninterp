@@ -370,6 +370,6 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
 
     # get data ready for return
     data = {"X": fc[0], "Y": fc[1], "Z": fc[2], "throw": throw, "heave": heave, "dipsep": dip_separation,
-            "i1x": intercept1[0], "i1z": intercept1[1], "i2x": intercept2[0], "i2z": intercept2[0],
+            "i1x": intercept1[0], "i1z": intercept1[1], "i2x": intercept2[0], "i2z": intercept2[1],
             "interp": fd.interp.unique(), "stick": fd.stick.unique(), "formation": fd.formation.unique(), "block": fd.block.unique()}
     return pd.DataFrame(data, index=[np.nan])
