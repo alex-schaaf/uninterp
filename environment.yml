@@ -1,0 +1,12 @@
+name: uninterp
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - bokeh
+  - warnings
+  - pip
+  - pip:
+    - mplstereoplot
