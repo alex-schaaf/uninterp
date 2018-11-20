@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import uninterp
 
 
 def plot_seis_section(cube, i, direction="inline", extent=None, aspect=None,
@@ -34,3 +35,5 @@ def plot_seis_section(cube, i, direction="inline", extent=None, aspect=None,
         ax.imshow(cube[:,:,i].T,
                   extent=extent[:4], aspect=aspect, **imkwargs)
     return ax
+
+

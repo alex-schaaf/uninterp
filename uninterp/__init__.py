@@ -9,6 +9,8 @@ from scipy.spatial.distance import cdist, euclidean
 import bokeh.plotting as bp
 import warnings
 
+from scipy.interpolate import griddata
+
 
 def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
     """
@@ -373,3 +375,29 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
             "i1x": intercept1[0], "i1z": intercept1[1], "i2x": intercept2[0], "i2z": intercept2[1],
             "interp": fd.interp.unique(), "stick": fd.stick.unique(), "formation": fd.formation.unique(), "block": fd.block.unique()}
     return pd.DataFrame(data, index=[np.nan])
+
+
+def get_basemap(DF, fmt, meshgrid, kind="mean"):
+    """
+
+    Args:
+        DF:
+        fmt:
+        meshgrid:
+        kind:
+
+    Returns:
+
+    """
+    df = mean_std_from_interp(DF, fmt, "z").reset_index()
+    df["X"] = [x.mid for x in df.xbin]
+    df["Y"] = [y.mid for y in df.ybin]
+
+    if kind == "mean":
+        return griddata(df[["X", "Y"]].values, df.Z.values, meshgrid)
+    elif kind == "std":
+        return griddata(df[["X", "Y"]].values, df["std"].values, meshgrid)
+    elif kind == "count":
+        return griddata(df[["X", "Y"]].values, df["count"].values / df["count"].values.max(), meshgrid)
+    else:
+        raise ValueError("kind must be either mean or std.")
