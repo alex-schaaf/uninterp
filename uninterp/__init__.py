@@ -262,15 +262,15 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
 
 
 def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
-    """
+    """Analyses fault throw at given fault between two given sets of horizons.
 
     Args:
         fd (pd.DataFrame): fault data (fault interp and stick pre-filtered)
-        hor1 (pd.DataFrame):
-        hor2 (pd.DataFrame):
+        hor1 (pd.DataFrame): horizon 1 data
+        hor2 (pd.DataFrame): horizon 2 data
 
     Returns:
-
+        pd.DataFrame containing fault throw, heave and dip separation and auxiliary information.
     """
     # TODO: fix negative Z workaround
     # ------------------------------------------
