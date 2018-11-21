@@ -378,16 +378,17 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
 
 
 def get_basemap(DF, fmt, meshgrid, kind="mean"):
-    """
+    """Extracts a basemap of given formation from given dataframe (interpolated on given meshgrid). Default mode
+    is for Z value, options are standard deviation and interpretation count per grid cell.
 
     Args:
-        DF:
-        fmt:
-        meshgrid:
-        kind:
+        DF (pd.DataFrame): Interpretation dataframe.
+        fmt (str): Formation name.
+        meshgrid (np.meshgrid): Meshgrid on which to interpolate the basemap.
+        kind (str): ["mean", "std", "count"]
 
     Returns:
-
+        Basemap as 2D numpy array.
     """
     df = mean_std_from_interp(DF, fmt, "z").reset_index()
     df["X"] = [x.mid for x in df.xbin]
