@@ -243,6 +243,17 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
 
     rdf = pd.DataFrame(mean)
     rdf["std"], rdf["count"] = std, count
+    rdf.reset_index(inplace=True)
+
+    if axis == "x":
+        rdf["Z"] = [z.mid for z in rdf.zbin]
+        rdf["Y"] = [y.mid for y in rdf.ybin]
+    elif axis == "y":
+        rdf["Z"] = [z.mid for z in rdf.zbin]
+        rdf["X"] = [x.mid for x in rdf.xbin]
+    elif axis == "z":
+        rdf["X"] = [x.mid for x in rdf.xbin]
+        rdf["Y"] = [y.mid for y in rdf.ybin]
 
     return rdf
 
