@@ -269,7 +269,7 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
             py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
                         (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
         except Warning as e:
-            print("warning found:", e, "for input data: ", x1, y1, x2, y2, x3, y3, x4, y4)
+            # print("warning found:", e, "for input data: ", x1, y1, x2, y2, x3, y3, x4, y4)
             return None
     return np.array([px[0], py[0]]).flatten()
 
@@ -445,6 +445,28 @@ def fta_for_single_interp(df, interp, fault, hor1, hor2):
             continue
         fta = fta.append(get_fault_throw(fd, hor1, hor2, n_dist=3, plot=False, grad_filter=60))
 
+    return fta
+
+
+def fta_for_single_fault(DF, fault, hor1, hor2):
+    """Conveniently Loops over all interpretations to extract fault throw data for given fault and horizons.
+
+    Args:
+        DF:
+        fault:
+        hor1:
+        hor2:
+
+    Returns:
+
+    """
+    fta = pd.DataFrame()
+    # loop over all interpretations
+    for interp in DF.interp.unique():
+        data = fta_for_single_interp(DF, interp, fault, hor1, hor2)
+        fta = fta.append(data)
+
+    fta.reset_index(inplace=True)
     return fta
 
 
