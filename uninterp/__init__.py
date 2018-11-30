@@ -274,6 +274,23 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     return np.array([px[0], py[0]]).flatten()
 
 
+def point_filter(fp1, fp2, p):
+    """Checks if given points p are on one or the other side of line given by fp1, fp2.
+
+    https://math.stackexchange.com/questions/274712/calculate-on-which-side-of-a-straight-line-is-a-given-point-located
+
+    Args:
+        fp1 (tuple): x,y
+        fp2 (tuple): x,y
+        p (np.ndarray): [[x,y], ... ,[x,y]]
+
+    Returns:
+        Boolean array to filter. Values True if left, False if right of line.
+    """
+    d = (p[:,0] - fp1[0]) * (fp2[1] - fp1[1]) - (p[:,1] - fp1[1]) * (fp2[0] - fp1[0])
+    return d < 0
+
+
 def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     """Analyses fault throw at given fault between two given sets of horizons.
 
@@ -295,12 +312,12 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     # Fault stick centroid
     fc = fd[["X", "Y", "Z"]].mean()
 
+    # predict for plot and point filter
+    nx = np.linspace(fd.X.min() - 500, fd.X.max() + 500, 100)
+    f_linreg_p = f_linreg.predict(nx[:, np.newaxis])
+
     # PLOT FAULT
     if plot:
-        # predict for plot
-        nx = np.linspace(fd.X.min() - 500, fd.X.max() + 500, 100)
-        f_linreg_p = f_linreg.predict(nx[:, np.newaxis])
-
         p = bp.figure()
         p.circle(fd.X, -fd.Z, color="black", legend="Fault")
         p.line(fd.X, -fd.Z, color="black")
@@ -318,6 +335,24 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
 
     if len(h1d) == 0 or len(h2d) == 0:
         return None
+
+    # horizon point filter
+    fp1 = nx[0], -float(f_linreg_p[0])
+    fp2 = nx[-1], -float(f_linreg_p[-1])
+
+    # horizon 1 (left of the fault)
+    bool_ = point_filter(fp1, fp2, h1d[["X", "Z"]].values)
+    # print(bool_)
+    h1d = h1d[bool_]
+
+    # horizon 2 (right of the fault
+    bool_ = point_filter(fp1, fp2, h2d[["X", "Z"]].values)
+    # print(~bool_)
+    h2d = h2d[~bool_]
+
+    if len(h1d) == 0 or len(h2d) == 0:
+        return None
+
 
     # ------------------------------------------
     # BLOCK 1
