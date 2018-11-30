@@ -388,6 +388,31 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     return pd.DataFrame(data, index=[np.nan])
 
 
+def fta_for_single_interp(df, interp, fault, hor1, hor2):
+    """Function loops over all fault sticks for given fault for given interpretation.
+
+    Args:
+        df (pd.DataFrame): Interpretations dataframe
+        interp (int): Interpretation id
+        fault (str): Fault name
+        hor1 (list): List of Horizon formation strings on side A
+        hor2 (list): List of Horizon formation strings on side B
+
+    Returns:
+        pd.DataFrame with fault throw data for the entire fault for given interpretation.
+    """
+    fault, hor1, hor2 = fta_provider(df, interp, fault, hor1, hor2)
+    fta = pd.DataFrame()
+    for stick in fault.stick.unique():
+        fd = fault[fault.stick == stick]
+        # if fault stick is only a single point, or if they have no vertical seperation
+        if len(fd) <= 1 or fd.Z.diff().sum() == 0.:
+            continue
+        fta = fta.append(get_fault_throw(fd, hor1, hor2, n_dist=3, plot=False, grad_filter=60))
+
+    return fta
+
+
 def get_basemap(DF, fmt, meshgrid, kind="mean"):
     """Extracts a basemap of given formation from given dataframe (interpolated on given meshgrid). Default mode
     is for Z value, options are standard deviation and interpretation count per grid cell.
