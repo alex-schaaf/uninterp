@@ -217,7 +217,7 @@ def plane_fit(points):
     return centroid, normal
 
 
-def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
+def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str, nbins:tuple):
     """Extracts mean, standard deviation and count of from fault or horizon interpretations from given binned dataframe
     along specified direction for given formation.
 
@@ -413,3 +413,25 @@ def get_basemap(DF, fmt, meshgrid, kind="mean"):
         return griddata(df[["X", "Y"]].values, df["count"].values / df["count"].values.max(), meshgrid)
     else:
         raise ValueError("kind must be either mean or std.")
+
+
+def fta_provider(df, interp, f, h1, h2):
+    """Filters given interpretation dataframe for given interpretation id, fault and
+    horizons on both sides of the fault.
+
+    Args:
+        df(pd.DataFrame):
+        interp(int):
+        f(str): Formation name of fault.
+        h1(list): List of formation names of horizons on the left of the fault.
+        h2(list): List of formation names of horizons on the right of the fault.
+    Returns:
+        fault df, h1 df, h2 df
+    """
+    interpf = (df.interp == interp)
+    fault = df[(df.subfmt == f) & interpf]
+
+    hor1 = df[(df.subfmt.isin(h1)) & interpf]
+    hor2 = df[(df.subfmt.isin(h2)) & interpf]
+
+    return fault, hor1, hor2
