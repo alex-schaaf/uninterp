@@ -217,7 +217,7 @@ def plane_fit(points):
     return centroid, normal
 
 
-def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str, nbins:tuple):
+def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
     """Extracts mean, standard deviation and count of from fault or horizon interpretations from given binned dataframe
     along specified direction for given formation.
 
