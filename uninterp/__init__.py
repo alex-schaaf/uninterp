@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 from scipy.spatial.distance import cdist, euclidean
 import bokeh.plotting as bp
 import warnings
-
+import networkx as nx
 from scipy.interpolate import griddata
 
 
@@ -517,3 +517,39 @@ def fta_provider(df, interp, f, h1, h2):
     hor2 = df[(df.subfmt.isin(h2)) & interpf]
 
     return fault, hor1, hor2
+
+
+def nodedf_from_df(df, interp, fmt):
+    """Extract graph node dataframe from given interpretation dataframe (collapses fault sticks into fault
+    stick centroids), interpretation id and formation name.
+
+    Args:
+        df (pd.DataFrame): Interpretation dataframe containing fault stick data for given interp, fmt.
+        interp (int): Interpretation identifier
+        fmt (str): Formation name
+
+    Returns:
+        pd.DataFrame
+    """
+    f = (df.interp == interp) & (df.subfmt == fmt)
+    faultsticks = df[f].groupby("ybin")
+    return faultsticks.mean().dropna().reset_index()
+
+
+def graph_from_nodedf(df):
+    """Convert node dataframe into networkx Graph object.
+
+    Args:
+        df (pd.DataFrame): Fault stick node dataframe, can be obtained via nodedf_from_df()
+
+    Returns:
+        nx.graph.Graph with fault sticks as nodes, connected by edges.
+    """
+    edge_u = df.index.values[1:]
+    edge_v = df.index.values[:-1]
+    nodes = df.index.values
+    edges = list(zip(edge_u, edge_v))  # consecutive
+    G = nx.graph.Graph()
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+    return G
