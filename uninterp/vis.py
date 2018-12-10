@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import uninterp
+import numpy as np
 
 
-def plot_seis_section(cube, i, direction="inline", extent=None, aspect=None,
+def plot_seis_section(cube, i, direction="inline", extent=None, aspect=None, ax=None,
                       plot_kwargs={}, imshow_kwargs={}):
     """Plots seismic section at position i of given cube. Designed especially for use with ipywidgets.
 
@@ -21,10 +22,13 @@ def plot_seis_section(cube, i, direction="inline", extent=None, aspect=None,
 
     pkwargs = {"figsize": (15, 10)}
     pkwargs.update(plot_kwargs)
-    imkwargs = {"interpolation": "bicubic", "cmap": "seismic"}
+    imkwargs = {"interpolation": "bicubic", "cmap": "seismic", "origin": "lower",
+                "vmin": np.min(cube),
+                "vmax": np.max(cube)}
     imkwargs.update(imshow_kwargs)
 
-    fig, ax = plt.subplots(**pkwargs)
+    if ax is None:
+        fig, ax = plt.subplots(**pkwargs)
     if direction == "inline":
         ax.imshow(cube[i,:,:].T,
                   extent=extent[:2] + extent[4:], aspect=aspect, **imkwargs)
