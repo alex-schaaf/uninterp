@@ -2,21 +2,22 @@ import numpy as np
 import pandas as pd
 
 
-def read_fault_sticks_kingdom(fp, formation=None):
+def read_fault_sticks_kingdom(fp:str, formation=None):
     """
-    Reads in Kingdom fault stick files (kingdom) exported from Petrel (tested with Petrel 2017) and returns
-    pandas DataFrame.
+    Reads in Kingdom fault stick files (kingdom) exported from Petrel (tested
+    with Petrel 2017) and returns pandas DataFrame.
 
     Args:
         fp (str): Filepath.
         formation (str, optional): Default: None.
 
     Returns:
-        (pandas.DataFrame) Fault stick information stored in dataframe with ["X", "Y", "Z", "formation", "stick id"] columns.
+        (pandas.DataFrame) Fault stick information stored in dataframe with
+        ["X", "Y", "Z", "formation", "stick id"] columns.
 
     """
     storage = []
-    with open(fp, "r") as file:  # due to the variable delimiter length its easier to just manually read this in
+    with open(fp, "r") as file:
         lines = file.readlines()
         for line in lines:
             line = line.split(" ")
@@ -37,19 +38,21 @@ def read_fault_sticks_kingdom(fp, formation=None):
 
 def read_fault_sticks_charisma(fp:str, formation=None):
     """
-    Reads in charisma fault stick files exported from Petrel (tested with Petrel 2017) and returns
-    pandas DataFrame.
+    Reads in charisma fault stick files exported from Petrel (tested with
+    Petrel 2017) and returns pandas DataFrame.
 
     Args:
         fp (str): Filepath.
         formation (str, optional): Default: None.
 
     Returns:
-        (pandas.DataFrame) Fault stick information stored in dataframe with ["X", "Y", "Z", "formation", "stick id"] columns.
+        (pandas.DataFrame) Fault stick information stored in dataframe with
+        ["X", "Y", "Z", "formation", "stick id"] columns.
 
     """
     storage = []
-    with open(fp, "r") as file:  # due to the variable delimiter length its easier to just manually read this in
+    with open(fp, "r") as file:  # due to the variable delimiter length its
+                                 # easier to just manually read this in
         lines = file.readlines()
         for line in lines:
             line = line.split(" ")
@@ -70,14 +73,17 @@ def read_fault_sticks_charisma(fp:str, formation=None):
 
 
 def read_cps3_grid(fp:str, dropshit:bool=True):
-    """Read CPS-3 gridded regular surface files exported by Petrel 2017 and returns a Pandas DataFrame.
+    """Read CPS-3 gridded regular surface files exported by Petrel 2017 and
+    returns a Pandas DataFrame.
 
     Args:
         fp (str): Filepath.
-        dropshit (bool): To drop or not to drop the useless grid points. Default: True
+        dropshit (bool): To drop or not to drop the useless grid points.
+            Default: True
 
     Returns:
-        (pandas.DataFrame) Fault stick information stored in dataframe with ["X", "Y", "Z"] columns.
+        (pandas.DataFrame) Fault stick information stored in dataframe with
+        ["X", "Y", "Z"] columns.
     """
 
     with open(fp, "r") as file:  # open file
@@ -86,7 +92,7 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
     # get extent,
     extent = np.array(lines[2].split(" ")[1:]).astype(float)
     fsnrow = np.array(lines[3].split(" ")[1:]).astype(int)
-    fsxinc = np.array(lines[4].split(" ")[1:]).astype(float)
+    # fsxinc = np.array(lines[4].split(" ")[1:]).astype(float)
 
     grid = []
     for line in lines[6:]:
@@ -96,7 +102,8 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
     de = np.arange(0, len(grid) + 1, len(grid) / fsnrow[1]).astype(int)
     for aa, bb in zip(de[:-1], de[1:]):
         row = grid[aa:bb]
-        flat_row = np.array([item for sublist in row for item in sublist]).astype(float)
+        flat_row = np.array([item for sublist in
+                             row for item in sublist]).astype(float)
         rows.append((flat_row))
 
     rows = np.array(rows)
