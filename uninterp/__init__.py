@@ -12,7 +12,8 @@ import networkx as nx
 from scipy.interpolate import griddata
 
 
-def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bins:int=40, range_=None):
+def histogram_2d(df:pd.DataFrame, min_:float, max_:float,
+                 direction:str="Z", bins:int=40, range_=None):
     """
 
     Arguments:
@@ -40,18 +41,22 @@ def histogram_2d(df:pd.DataFrame, min_:float, max_:float, direction:str="Z", bin
 
 
 def bin_df(df:pd.DataFrame, nbins:iter, extent:iter=None):
-    """Inplace binning of given dataframe along x,y,z axis using given number of divisions in each direction.
+    """Inplace binning of given dataframe along x,y,z axis using given number
+    of divisions in each direction.
 
     Args:
         df (pd.DataFrame): DataFrame to be binned, must contain columns X,Y,Z
-        nbins (iter): List or tuple of int containing the number of bins in each direction (x,y,z)
+        nbins (iter): List or tuple of int containing the number of bins in
+            each direction (x,y,z)
         extent (iter): List or tuple of float containing the extent (x,X,y,Y,z,Z)
 
     Returns:
         None
     """
     if not extent:
-        extent = [df.X.min(), df.X.max(), df.Y.min(), df.Y.max(), df.Z.min(), df.Z.max()]
+        extent = [df.X.min(), df.X.max(),
+                  df.Y.min(), df.Y.max(),
+                  df.Z.min(), df.Z.max()]
     df["xbin"] = pd.cut(df["X"], np.linspace(extent[0], extent[1], nbins[0]))
     df["ybin"] = pd.cut(df["Y"], np.linspace(extent[2], extent[3], nbins[1]))
     df["zbin"] = pd.cut(df["Z"], np.linspace(extent[4], extent[5], nbins[2]))
@@ -59,10 +64,12 @@ def bin_df(df:pd.DataFrame, nbins:iter, extent:iter=None):
 
 
 def concave_faultstick_trisurf(df:pd.DataFrame, formation: str, interp: int):
-    """Construct 'concave' fault surface from given fault sticks by use of iterative Delaunay triangulation.
+    """Construct 'concave' fault surface from given fault sticks by use of
+    iterative Delaunay triangulation.
 
     Args:
-        df: pandas DataFrame containing fault stick information with columns [X Y Z formation interp "stick_id"]
+        df: pandas DataFrame containing fault stick information with columns
+            [X Y Z formation interp "stick_id"]
         formation: Formation to construct surface for.
         interp: Interpretation to construct surface for.
 
@@ -116,19 +123,23 @@ def normals_from_delaunay(delaunays:list):
     return centroids, normals, simplices
 
 
-def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, interp:int, filter_:bool=True):
-    """Converts given centroids and normals into pandas.DataFrame compatible with GemPy orientation data structure.
+def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str,
+                      interp:int, filter_:bool=True):
+    """Converts given centroids and normals into pandas.DataFrame compatible
+    with GemPy orientation data structure.
 
     Args:
         centroids (np.ndarray): Centroids of planes (N,3)
         normals (np.ndarray): Normals of planes (N,3)
         formation (str): Formation name
         interp (int): Interpretation id
-        filter_ (bool): If orientation data should be filtered or not (default: True).
+        filter_ (bool): If orientation data should be filtered or not
+            (default: True).
             Currently only filters completely horizontal planes.
 
     Returns:
-        (pd.DataFrame) Orientations dataframe compatible with GemPy's data structure.
+        (pd.DataFrame) Orientations dataframe compatible with GemPy's data
+        structure.
     """
     ndf = pd.DataFrame(columns="X Y Z G_x G_y G_z".split(" "))
     ndf.X, ndf.Y, ndf.Z = centroids[:, 0], centroids[:, 1], centroids[:, 2]
@@ -136,7 +147,9 @@ def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, i
     ndf["formation"] = formation
     ndf["interp"] = interp
 
-    plunge, bearing = mplstereonet.vector2plunge_bearing(normals[:, 0], normals[:, 1], normals[:, 2])
+    plunge, bearing = mplstereonet.vector2plunge_bearing(normals[:, 0],
+                                                         normals[:, 1],
+                                                         normals[:, 2])
     ndf["dip"], ndf["azimuth"] = plunge, bearing
     ndf["polarity"] = 1
 
@@ -147,15 +160,20 @@ def orient_for_interp(centroids:np.ndarray, normals:np.ndarray, formation:str, i
         return ndf
 
 
-def get_interf_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5, 5, 4), extent=None):
-    """Fits planes to binned fault interpretations (per interpretation to estimate orientation, returns GemPy-compatible
-    pd.DataFrame with orientation data.
+def get_interf_orientations(df:pd.DataFrame, fault:str,
+                            nbins:iter=(5, 5, 4), extent=None):
+    """Fits planes to binned fault interpretations (per interpretation to
+    estimate orientation, returns GemPy-compatible pd.DataFrame with orientation
+    data.
 
     Args:
-        df (pd.DataFrame): DataFrame containing the fault stick interpretation points.
+        df (pd.DataFrame): DataFrame containing the fault stick interpretation
+            points.
         fault (str): Formation string of the fault to be extracted.
-        nbins (iter): List or tuple containing the number of bins in each spatial direction (x,y,z), default (5,5,4)
-        extent (tuple): (x,X,y,Y,z,Z), if not given will determin extent from data
+        nbins (iter): List or tuple containing the number of bins in each
+            spatial direction (x,y,z), default (5,5,4)
+        extent (tuple): (x,X,y,Y,z,Z), if not given will determin extent
+            from data
 
     Returns:
         pd.DataFrame with GemPy-compatible orientations structure
@@ -172,7 +190,9 @@ def get_interf_orientations(df:pd.DataFrame, fault:str, nbins:iter=(5, 5, 4), ex
             continue  # can't fit plane
         points = df.loc[i][["X", "Y", "Z"]].values
         centroid, normal = plane_fit(points.T)
-        dip, azimuth = mplstereonet.vector2plunge_bearing(normal[0], normal[1], normal[2])
+        dip, azimuth = mplstereonet.vector2plunge_bearing(normal[0],
+                                                          normal[1],
+                                                          normal[2])
 
         orientation = [centroid[0], centroid[1], centroid[2],
                        normal[0], normal[1], normal[2],
@@ -282,7 +302,8 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
 
 
 def point_filter(fp1, fp2, p):
-    """Checks if given points p are on one or the other side of line given by fp1, fp2.
+    """Checks if given points p are on one or the other side of line given by
+    fp1, fp2.
 
     https://math.stackexchange.com/questions/274712/calculate-on-which-side-of-a-straight-line-is-a-given-point-located
 
@@ -307,7 +328,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
         hor2 (pd.DataFrame): horizon 2 data
 
     Returns:
-        pd.DataFrame containing fault throw, heave and dip separation and auxiliary information.
+        pd.DataFrame containing fault throw, heave and dip separation and
+        auxiliary information.
     """
     # TODO: fix negative Z workaround
     # ------------------------------------------
@@ -334,8 +356,10 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     # ------------------------------------------
     # DISTANCES
     # find nearest point (euclidean)
-    h1pi = np.argsort(cdist([tuple(fc)], hor1[["X", "Y", "Z"]].values))[0, :n_dist]
-    h2pi = np.argsort(cdist([tuple(fc)], hor2[["X", "Y", "Z"]].values))[0, :n_dist]
+    h1pi = np.argsort(cdist([tuple(fc)],
+                            hor1[["X", "Y", "Z"]].values))[0, :n_dist]
+    h2pi = np.argsort(cdist([tuple(fc)],
+                            hor2[["X", "Y", "Z"]].values))[0, :n_dist]
 
     h1d = hor1[hor1["Y"].isin(hor1.iloc[h1pi].Y.values)]
     h2d = hor2[hor2["Y"].isin(hor2.iloc[h2pi].Y.values)]
@@ -374,10 +398,14 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     h1_linreg = LinearRegression()
     h1_linreg.fit(h1d.X[gradf][:, np.newaxis], -h1d.Z[gradf][:, np.newaxis])
 
-    intercept1 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
-                                  fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
-                                  h1d.X.min(), h1_linreg.predict(np.array([h1d.X.min()])[:, np.newaxis]),
-                                  h1d.X.max(), h1_linreg.predict(np.array([h1d.X.max()])[:, np.newaxis]))
+    intercept1 = findIntersection(fd.X.min(),
+                                  f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
+                                  fd.X.max(),
+                                  f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
+                                  h1d.X.min(),
+                                  h1_linreg.predict(np.array([h1d.X.min()])[:, np.newaxis]),
+                                  h1d.X.max(),
+                                  h1_linreg.predict(np.array([h1d.X.max()])[:, np.newaxis]))
     if intercept1 is None:
         return None
 
@@ -398,10 +426,14 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     h2_linreg = LinearRegression()
     h2_linreg.fit(h2d.X[gradf][:, np.newaxis], -h2d.Z[gradf][:, np.newaxis])
 
-    intercept2 = findIntersection(fd.X.min(), f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
-                                  fd.X.max(), f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
-                                  h2d.X.min(), h2_linreg.predict(np.array([h2d.X.min()])[:, np.newaxis]),
-                                  h2d.X.max(), h2_linreg.predict(np.array([h2d.X.max()])[:, np.newaxis]))
+    intercept2 = findIntersection(fd.X.min(),
+                                  f_linreg.predict(np.array([fd.X.min()])[:, np.newaxis]),
+                                  fd.X.max(),
+                                  f_linreg.predict(np.array([fd.X.max()])[:, np.newaxis]),
+                                  h2d.X.min(),
+                                  h2_linreg.predict(np.array([h2d.X.min()])[:, np.newaxis]),
+                                  h2d.X.max(),
+                                  h2_linreg.predict(np.array([h2d.X.max()])[:, np.newaxis]))
     if intercept2 is None:
         return None
 
@@ -410,8 +442,10 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
         h2_linreg_p = h2_linreg.predict(nx[:, np.newaxis])
         p.circle(h2d.X, -h2d.Z, color="orange", legend="Block 2")
         p.line(nx, h2_linreg_p[:, 0], color="orange")
-        p.circle(intercept1[0], intercept1[1], color="pink", legend="Intersect 1", size=10)
-        p.circle(intercept2[0], intercept2[1], color="lime", legend="Intersect 2", size=10)
+        p.circle(intercept1[0], intercept1[1],
+                 color="pink", legend="Intersect 1", size=10)
+        p.circle(intercept2[0], intercept2[1],
+                 color="lime", legend="Intersect 2", size=10)
 
         bp.show(p)
     # slip
@@ -424,14 +458,21 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     throw = abs(intercept1[1] - intercept2[1])
 
     # get data ready for return
-    data = {"X": fc[0], "Y": fc[1], "Z": fc[2], "throw": throw, "heave": heave, "dipsep": dip_separation,
-            "i1x": intercept1[0], "i1z": intercept1[1], "i2x": intercept2[0], "i2z": intercept2[1],
-            "interp": fd.interp.unique(), "stick": fd.stick.unique(), "formation": fd.formation.unique(), "block": fd.block.unique()}
+    data = {"X": fc[0], "Y": fc[1], "Z": fc[2],
+            "throw": throw, "heave": heave, "dipsep": dip_separation,
+            "i1x": intercept1[0], "i1z": intercept1[1],
+            "i2x": intercept2[0], "i2z": intercept2[1],
+            "interp": fd.interp.unique(),
+            "stick": fd.stick.unique(),
+            "formation": fd.formation.unique(),
+            "block": fd.block.unique()}
+
     return pd.DataFrame(data, index=[np.nan])
 
 
 def fta_for_single_interp(df, interp, fault, hor1, hor2):
-    """Function loops over all fault sticks for given fault for given interpretation.
+    """Function loops over all fault sticks for given fault for given
+     interpretation.
 
     Args:
         df (pd.DataFrame): Interpretations dataframe
@@ -441,22 +482,26 @@ def fta_for_single_interp(df, interp, fault, hor1, hor2):
         hor2 (list): List of Horizon formation strings on side B
 
     Returns:
-        pd.DataFrame with fault throw data for the entire fault for given interpretation.
+        pd.DataFrame with fault throw data for the entire fault for
+        given interpretation.
     """
     fault, hor1, hor2 = fta_provider(df, interp, fault, hor1, hor2)
     fta = pd.DataFrame()
     for stick in fault.stick.unique():
         fd = fault[fault.stick == stick]
-        # if fault stick is only a single point, or if they have no vertical seperation
+        # if fault stick is only a single point, or if they have no vertical
+        # seperation
         if len(fd) <= 1 or fd.Z.diff().sum() == 0.:
             continue
-        fta = fta.append(get_fault_throw(fd, hor1, hor2, n_dist=3, plot=False, grad_filter=60))
+        fta = fta.append(get_fault_throw(fd, hor1, hor2,
+                                         n_dist=3, plot=False, grad_filter=60))
 
     return fta
 
 
 def fta_for_single_fault(DF, fault, hor1, hor2):
-    """Conveniently Loops over all interpretations to extract fault throw data for given fault and horizons.
+    """Conveniently Loops over all interpretations to extract fault throw data
+    for given fault and horizons.
 
     Args:
         DF:
@@ -478,8 +523,9 @@ def fta_for_single_fault(DF, fault, hor1, hor2):
 
 
 def get_basemap(DF, fmt, meshgrid, kind="mean"):
-    """Extracts a basemap of given formation from given dataframe (interpolated on given meshgrid). Default mode
-    is for Z value, options are standard deviation and interpretation count per grid cell.
+    """Extracts a basemap of given formation from given dataframe
+    (interpolated on given meshgrid). Default mode is for Z value, options are
+     standard deviation and interpretation count per grid cell.
 
     Args:
         DF (pd.DataFrame): Interpretation dataframe.
@@ -505,8 +551,8 @@ def get_basemap(DF, fmt, meshgrid, kind="mean"):
 
 
 def fta_provider(df, interp, f, h1, h2):
-    """Filters given interpretation dataframe for given interpretation id, fault and
-    horizons on both sides of the fault.
+    """Filters given interpretation dataframe for given interpretation id, fault
+    and horizons on both sides of the fault.
 
     Args:
         df(pd.DataFrame):
@@ -527,11 +573,13 @@ def fta_provider(df, interp, f, h1, h2):
 
 
 def nodedf_from_df(df, interp, fmt):
-    """Extract graph node dataframe from given interpretation dataframe (collapses fault sticks into fault
-    stick centroids), interpretation id and formation name.
+    """Extract graph node dataframe from given interpretation dataframe
+    (collapses fault sticks into fault stick centroids), interpretation id and
+     formation name.
 
     Args:
-        df (pd.DataFrame): Interpretation dataframe containing fault stick data for given interp, fmt.
+        df (pd.DataFrame): Interpretation dataframe containing fault stick data
+            for given interp, fmt.
         interp (int): Interpretation identifier
         fmt (str): Formation name
 
@@ -547,7 +595,8 @@ def graph_from_nodedf(df):
     """Convert node dataframe into networkx Graph object.
 
     Args:
-        df (pd.DataFrame): Fault stick node dataframe, can be obtained via nodedf_from_df()
+        df (pd.DataFrame): Fault stick node dataframe, can be obtained via
+            nodedf_from_df()
 
     Returns:
         nx.graph.Graph with fault sticks as nodes, connected by edges.
