@@ -217,9 +217,10 @@ def plane_fit(points):
     return centroid, normal
 
 
-def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
-    """Extracts mean, standard deviation and count of from fault or horizon interpretations from given binned dataframe
-    along specified direction for given formation.
+def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str, subfmt=False):
+    """Extracts mean, standard deviation and count of from fault or horizon
+    interpretations from given binned dataframe along specified direction for
+    given formation.
 
     Args:
         df: pd.DataFrame containing interpretation data, prebinned!
@@ -229,14 +230,19 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
     Returns:
         pd.DataFrame
     """
+    if subfmt:
+        filter_ = df.subfmt == fmt
+    else:
+        filter_ = df.formation == fmt
+
     if axis == "x":
-        grp = df[df.formation == fmt].groupby(["ybin", "zbin"])
+        grp = df[filter_].groupby(["ybin", "zbin"])
         mean, std, count = grp.X.mean(), grp.X.std(), grp.X.count()
     elif axis == "z":
-        grp = df[df.formation == fmt].groupby(["xbin", "ybin"])
+        grp = df[filter_].groupby(["xbin", "ybin"])
         mean, std, count = grp.Z.mean(), grp.Z.std(), grp.Z.count()
     elif axis == "y":
-        grp = df[df.formation == fmt].groupby(["xbin", "zbin"])
+        grp = df[filter_].groupby(["xbin", "zbin"])
         mean, std, count = grp.Y.mean(), grp.Y.std(), grp.Y.count()
     else:
         raise ValueError("Direction must be either x, y or z.")
@@ -256,6 +262,7 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str):
         rdf["Y"] = [y.mid for y in rdf.ybin]
 
     return rdf
+
 
 def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     """modified from source: https://stackoverflow.com/a/51127674"""
