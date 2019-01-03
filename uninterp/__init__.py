@@ -522,7 +522,7 @@ def fta_for_single_fault(DF, fault, hor1, hor2):
     return fta
 
 
-def get_basemap(DF, fmt, meshgrid, kind="mean"):
+def get_basemap(DF, fmt, meshgrid, kind="mean", subfmt=True):
     """Extracts a basemap of given formation from given dataframe
     (interpolated on given meshgrid). Default mode is for Z value, options are
      standard deviation and interpretation count per grid cell.
@@ -536,7 +536,7 @@ def get_basemap(DF, fmt, meshgrid, kind="mean"):
     Returns:
         Basemap as 2D numpy array.
     """
-    df = mean_std_from_interp(DF, fmt, "z").reset_index()
+    df = mean_std_from_interp(DF, fmt, "z", subfmt=subfmt).reset_index()
     df["X"] = [x.mid for x in df.xbin]
     df["Y"] = [y.mid for y in df.ybin]
 
