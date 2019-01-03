@@ -281,6 +281,10 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str, subfmt=False):
         rdf["X"] = [x.mid for x in rdf.xbin]
         rdf["Y"] = [y.mid for y in rdf.ybin]
 
+    if len(rdf) == 0:
+        warnings.warn("Empty DataFrame detected, check if DataFrame binning is "
+                      "correct (at least one bin for each axis).")
+
     return rdf
 
 
