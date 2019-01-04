@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 
 
 def read_fault_sticks_kingdom(fp:str, formation=None):
@@ -128,3 +129,37 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
 
     return df
 
+
+def get_filepaths(directory:str):
+    """Generates filepaths for all files in given directory."""
+    return (directory + filename for filename in os.listdir(directory))
+
+
+def read_well_trace_petrel(fp:str):
+    """Reads well trace file exported from Petrel.
+
+    Args:
+        fp (str): Filepath of well trace.
+
+    Returns:
+        pandas.DataFrame of well trace.
+    """
+    df = pd.read_csv(fp, skiprows=17, sep=" ", header=None)
+    df = df.drop(columns=0)
+    df.columns = "MD X Y Z TVD DX DY AZIM_TN INCL DLS AZIM_GN".split()
+    return df
+
+
+def read_well_trace_petrel_dir(directory:str):
+    """Load all well traces found in given directory and yield generator of
+    DataFrames. All files in directory will be loaded, so make sure its only
+    wells.
+
+    Args:
+        directory (str): Filepath for directory to read from.
+
+    Returns:
+        Generator of pandas.DataFrames for each well in directory.
+    """
+    for well in get_filepaths(directory):
+        yield read_well_trace_petrel(well)
