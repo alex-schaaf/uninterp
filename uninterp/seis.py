@@ -95,7 +95,8 @@ def image_reflector_length(data_labeled, window_shape=30, step=1):
 
 
 def signal_to_noise_ratio(data, window_shape=30, step=5):
-    """Simple singal-to-noise calculation (mean / stdev) using a convolving window of given size.
+    """Simple singal-to-noise calculation (mean / stdev) using a convolving
+    window of given size.
 
     Args:
         data (np.ndarray):

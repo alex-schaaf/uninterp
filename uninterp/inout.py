@@ -73,7 +73,7 @@ def read_fault_sticks_charisma(fp:str, formation=None):
     return df
 
 
-def read_cps3_grid(fp:str, dropshit:bool=True):
+def read_cps3_grid(fp:str, dropshit:bool=True, return_grid:bool=False):
     """Read CPS-3 gridded regular surface files exported by Petrel 2017 and
     returns a Pandas DataFrame.
 
@@ -112,6 +112,9 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
     Xs = np.linspace(extent[0], extent[1], fsnrow[1])
     Ys = np.linspace(extent[3], extent[2], fsnrow[0])
 
+    if return_grid:
+        return rows, Xs, Ys
+
     XY = []
     for x in Xs:
         for y in Ys:
@@ -133,6 +136,34 @@ def read_cps3_grid(fp:str, dropshit:bool=True):
 def get_filepaths(directory:str):
     """Generates filepaths for all files in given directory."""
     return (directory + filename for filename in os.listdir(directory))
+
+
+def get_filepaths_filtered(directory:str, interp, horizons:list):
+    for fp in get_filepaths(directory + "id" + str(interp) + "/"):
+        if fp.endswith(".xml"):
+            continue
+
+        if fp.split("/")[-1] not in horizons:
+            continue
+        yield fp
+
+
+def load_grid_surface(fp):
+    Z, Xs, Ys = read_cps3_grid(fp, return_grid=True)
+    X,Y = np.meshgrid(Xs, Ys)
+    Z[Z==Z.max()] = np.nan
+    return X, Y, Z.T
+
+
+def load_grid_surfaces_interp(fp, interp, names, verbose=False):
+    surfaces = {}
+    for filepath in get_filepaths_filtered(fp, interp, names):
+        if verbose:
+            print(filepath)
+        surface = {}
+        surface["X"], surface["Y"], surface["Z"] = load_grid_surface(filepath)
+        surfaces[filepath.split("/")[-1]] = surface
+    return surfaces
 
 
 def read_well_trace_petrel(fp:str):
