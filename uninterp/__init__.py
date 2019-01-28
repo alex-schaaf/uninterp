@@ -613,3 +613,18 @@ def graph_from_nodedf(df):
     G.add_nodes_from(nodes)
     G.add_edges_from(edges)
     return G
+
+
+def filter_x(df, x, d):
+    """Returns filtered dataframe at z position +- distance d."""
+    return (df.X < x + d) & (df.X > x - d)
+
+
+def filter_y(df, y, d):
+    """Returns filtered dataframe at z position +- distance d."""
+    return (df.Y < y + d) & (df.Y > y - d)
+
+
+def filter_z(df, z, d):
+    """Returns filtered dataframe at z position +- distance d."""
+    return (df.Z < z + d) & (df.Z > z - d)
