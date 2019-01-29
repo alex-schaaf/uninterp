@@ -139,6 +139,7 @@ def get_filepaths(directory:str):
 
 
 def get_filepaths_filtered(directory:str, interp, horizons:list):
+    """TODO: docstring"""
     for fp in get_filepaths(directory + "id" + str(interp) + "/"):
         if fp.endswith(".xml"):
             continue
@@ -149,6 +150,7 @@ def get_filepaths_filtered(directory:str, interp, horizons:list):
 
 
 def load_grid_surface(fp):
+    """TODO: docstring"""
     Z, Xs, Ys = read_cps3_grid(fp, return_grid=True)
     X,Y = np.meshgrid(Xs, Ys)
     Z[Z==Z.max()] = np.nan
@@ -156,6 +158,7 @@ def load_grid_surface(fp):
 
 
 def load_grid_surfaces_interp(fp, interp, names, verbose=False):
+    """TODO: docstring"""
     surfaces = {}
     for filepath in get_filepaths_filtered(fp, interp, names):
         if verbose:

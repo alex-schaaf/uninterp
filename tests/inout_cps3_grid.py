@@ -1,3 +1,7 @@
+"""
+Visual check to assess proper cps3 grid loading.
+"""
+
 import matplotlib.pyplot as plt
 
 import sys
