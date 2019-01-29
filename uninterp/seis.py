@@ -23,12 +23,12 @@ def image_contrast(data:np.ndarray, window_shp:int=30, step:int=5):
     each given step.
 
     Args:
-        data:
-        window_shp:
-        step:
+        data: Seismic data array.
+        window_shp: Size of the rolling window.
+        step: Step size of the rolling window.
 
     Returns:
-
+        (np.ndarray)
     """
     wd = view_as_windows(data, window_shp, step=step)
     img_contrast = np.zeros(wd.shape[:2])
@@ -40,14 +40,14 @@ def image_contrast(data:np.ndarray, window_shp:int=30, step:int=5):
 
 
 def binary_threshold(data:np.ndarray, threshold:int=65):
-    """
+    """Splits the given data into binary at given precentile threshold.
 
     Args:
         data (np.ndarray): Slice or Cube of seismic
         threshold (int): Threshold at which to split the dataset into binary.
 
     Returns:
-        np.ndarray
+        (np.ndarray)
     """
     data_binary = np.zeros_like(data)
     data_binary[data >= np.percentile(data, threshold)] = 1
@@ -78,15 +78,15 @@ def label_reflector_length(data_binary:np.ndarray, norm:bool=False):
 def mean_reflector_length(data_labeled:np.ndarray,
                           window_shp:int=30,
                           step:int=1):
-    """
+    """Calculates mean reflector length attribute.
 
     Args:
-        data_labeled:
-        window_shp:
-        step:
+        data_labeled: Labeled data array.
+        window_shp: Size of the window to average across.
+        step: Step size of the rolling window.
 
     Returns:
-
+        (np.ndarray)
     """
     wd = view_as_windows(data_labeled, window_shp, step=step)
     length_mean = np.zeros(wd.shape[:2])
@@ -102,12 +102,12 @@ def signal_to_noise_ratio(data:np.ndarray, window_shp:int=30, step:int=5):
     window of given size.
 
     Args:
-        data (np.ndarray):
-        window_shp (int):
-        step (int):
+        data (np.ndarray): Seismic data array.
+        window_shp (int): Size of the rolling window.
+        step (int): Step size of the rolling window.
 
     Returns:
-
+        (np.ndarray)
     """
     wd = view_as_windows(np.abs(data), window_shp, step=step)
     snr = np.zeros(wd.shape[:2])
