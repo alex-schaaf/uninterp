@@ -208,7 +208,7 @@ def get_interf_orientations(df:pd.DataFrame, fault:str,
     return orientations
 
 
-def plane_fit(points):
+def plane_fit(points:np.ndarray):
     """
     Fit plane to points in PointSet
     Fit an d-dimensional plane to the points in a point set.
@@ -288,10 +288,14 @@ def mean_std_from_interp(df:pd.DataFrame, fmt:str, axis:str, subfmt=False):
     return rdf
 
 
-def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
-    """modified from source: https://stackoverflow.com/a/51127674"""
+def findIntersection(x1:float, y1:float,
+                     x2:float, y2:float,
+                     x3:float, y3:float,
+                     x4:float, y4:float):
+    """Find intersection point of two lines defined by two points each.
 
-
+    Modified from source: https://stackoverflow.com/a/51127674
+    """
     with warnings.catch_warnings():
         warnings.filterwarnings("error")
         try:
@@ -305,7 +309,7 @@ def findIntersection(x1, y1, x2, y2, x3, y3, x4, y4):
     return np.array([px[0], py[0]]).flatten()
 
 
-def point_filter(fp1, fp2, p):
+def point_filter(fp1:tuple, fp2:tuple, p:np.ndarray):
     """Checks if given points p are on one or the other side of line given by
     fp1, fp2.
 
@@ -474,7 +478,8 @@ def get_fault_throw(fd, hor1, hor2, n_dist=3, plot=True, grad_filter:int=None):
     return pd.DataFrame(data, index=[np.nan])
 
 
-def fta_for_single_interp(df, interp, fault, hor1, hor2):
+def fta_for_single_interp(df:pd.DataFrame, interp:int, fault:str,
+                          hor1:list, hor2:list):
     """Function loops over all fault sticks for given fault for given
      interpretation.
 
@@ -503,36 +508,37 @@ def fta_for_single_interp(df, interp, fault, hor1, hor2):
     return fta
 
 
-def fta_for_single_fault(DF, fault, hor1, hor2):
+def fta_for_single_fault(df:pd.DataFrame, fault:str, hor1:list, hor2:list):
     """Conveniently Loops over all interpretations to extract fault throw data
     for given fault and horizons.
 
     Args:
-        DF:
-        fault:
-        hor1:
-        hor2:
+        df: Interpretations dataframe
+        fault: Fault name
+        hor1: List of Horizon formation strings on side A
+        hor2: List of Horizon formation strings on side B
 
     Returns:
-
+        pd.DataFrame
     """
     fta = pd.DataFrame()
     # loop over all interpretations
-    for interp in DF.interp.unique():
-        data = fta_for_single_interp(DF, interp, fault, hor1, hor2)
+    for interp in df.interp.unique():
+        data = fta_for_single_interp(df, interp, fault, hor1, hor2)
         fta = fta.append(data)
 
     fta.reset_index(inplace=True)
     return fta
 
 
-def get_basemap(DF, fmt, meshgrid, kind="mean", subfmt=True):
+def get_basemap(df:pd.DataFrame, fmt:str, meshgrid:np.meshgrid, kind:str="mean",
+                subfmt:bool=True):
     """Extracts a basemap of given formation from given dataframe
     (interpolated on given meshgrid). Default mode is for Z value, options are
      standard deviation and interpretation count per grid cell.
 
     Args:
-        DF (pd.DataFrame): Interpretation dataframe.
+        df (pd.DataFrame): Interpretation dataframe.
         fmt (str): Formation name.
         meshgrid (np.meshgrid): Meshgrid on which to interpolate the basemap.
         kind (str): ["mean", "std", "count"]
@@ -540,21 +546,21 @@ def get_basemap(DF, fmt, meshgrid, kind="mean", subfmt=True):
     Returns:
         Basemap as 2D numpy array.
     """
-    df = mean_std_from_interp(DF, fmt, "z", subfmt=subfmt).reset_index()
-    df["X"] = [x.mid for x in df.xbin]
-    df["Y"] = [y.mid for y in df.ybin]
+    data = mean_std_from_interp(df, fmt, "z", subfmt=subfmt).reset_index()
+    data["X"] = [x.mid for x in data.xbin]
+    data["Y"] = [y.mid for y in data.ybin]
 
     if kind == "mean":
-        return griddata(df[["X", "Y"]].values, df.Z.values, meshgrid)
+        return griddata(data[["X", "Y"]].values, data.Z.values, meshgrid)
     elif kind == "std":
-        return griddata(df[["X", "Y"]].values, df["std"].values, meshgrid)
+        return griddata(data[["X", "Y"]].values, data["std"].values, meshgrid)
     elif kind == "count":
-        return griddata(df[["X", "Y"]].values, df["count"].values / df["count"].values.max(), meshgrid)
+        return griddata(data[["X", "Y"]].values, data["count"].values / data["count"].values.max(), meshgrid)
     else:
         raise ValueError("kind must be either mean or std.")
 
 
-def fta_provider(df, interp, f, h1, h2):
+def fta_provider(df:pd.DataFrame, interp:int, f:str, h1:list, h2:list):
     """Filters given interpretation dataframe for given interpretation id, fault
     and horizons on both sides of the fault.
 
@@ -576,7 +582,7 @@ def fta_provider(df, interp, f, h1, h2):
     return fault, hor1, hor2
 
 
-def nodedf_from_df(df, interp, fmt):
+def nodedf_from_df(df:pd.DataFrame, interp:int, fmt:str):
     """Extract graph node dataframe from given interpretation dataframe
     (collapses fault sticks into fault stick centroids), interpretation id and
      formation name.
@@ -595,7 +601,7 @@ def nodedf_from_df(df, interp, fmt):
     return faultsticks.mean().dropna().reset_index()
 
 
-def graph_from_nodedf(df):
+def graph_from_nodedf(df:pd.DataFrame):
     """Convert node dataframe into networkx Graph object.
 
     Args:
@@ -615,16 +621,16 @@ def graph_from_nodedf(df):
     return G
 
 
-def filter_x(df, x, d):
-    """Returns filtered dataframe at z position +- distance d."""
+def filter_x(df:pd.DataFrame, x:float, d:float):
+    """Returns filtered dataframe at x position +- distance d."""
     return (df.X < x + d) & (df.X > x - d)
 
 
-def filter_y(df, y, d):
-    """Returns filtered dataframe at z position +- distance d."""
+def filter_y(df:pd.DataFrame, y:float, d:float):
+    """Returns filtered dataframe at y position +- distance d."""
     return (df.Y < y + d) & (df.Y > y - d)
 
 
-def filter_z(df, z, d):
+def filter_z(df:pd.DataFrame, z:float, d:float):
     """Returns filtered dataframe at z position +- distance d."""
     return (df.Z < z + d) & (df.Z > z - d)
