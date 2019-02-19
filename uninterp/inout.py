@@ -197,3 +197,29 @@ def read_well_trace_petrel_dir(directory:str):
     """
     for well in get_filepaths(directory):
         yield read_well_trace_petrel(well)
+
+
+def read_welltops_petrel(fp:str):
+    """Read Petrel 2017 welltop files, which are horrible. So far only X,Y,Z
+    and Formation.
+
+    Args:
+        fp (str): Filepath
+
+    Returns:
+        pd.DataFrame with columns [X Y Z formation]
+    """
+    with open(fp) as f:
+        lines = f.readlines()
+
+    lines = [line.rstrip("\n") for line in lines]
+    # columns = lines[5:32]
+
+    x = [line.split()[0] for line in lines[33:]]
+    y = [line.split()[1] for line in lines[33:]]
+    z = [line.split()[2] for line in lines[33:]]
+
+    fmt = [line.split("\"")[1] for line in lines[33:]]
+
+    return pd.DataFrame(list(zip(x,y,z,fmt)),
+                        columns=["X", "Y", "Z", "formation"])
